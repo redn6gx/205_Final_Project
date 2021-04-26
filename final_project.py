@@ -50,15 +50,15 @@ class Homepage(QWidget):
 
         payload = {
             'client_id': api_key,
-            'query' : 'dog',
+            'query' : self.srch_box.text(),
             'page' : 1,
-            'per_page' : 3
+            'per_page' : 1
         }
         endpoint = 'https://api.unsplash.com/search/collections'
         try:
             request = requests.get(endpoint, params=payload)
             data = request.json()
-            # pprint(data)
+            pprint(data)
         except:
             print('please try again')
 
