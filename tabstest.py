@@ -1,24 +1,107 @@
 import sys
 from PySide6.QtWidgets import QGroupBox, QListWidgetItem,QMainWindow, QGridLayout, QApplication, QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QDialog, QTextBrowser, QComboBox, QLineEdit, QTabWidget, QListWidget, QListView
-from PySide6.QtCore import Qt, Slot, QSize, Signal
+from PySide6.QtCore import Qt, Slot, QSize, Signal, QObject
 from PySide6.QtGui import QPixmap, QIcon
 from PIL import Image
 import requests, json
 from pprint import pprint
 import os, pickle
+import tempfile
 
-class clickableImage(QLabel):
-    clicked = Signal(str)
 
-    def __init__(self,image,data):
-        super(clickableImage,self).__init__()
-        pixmap = QPixmap()
-        print('load (%s) %r' % (pixmap.load(image), image))
-        self.data = data
-        self.setPixmap(image)
+class savedpage(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QHBoxLayout()
+        i = 0
+        self.names = []
+        self.ebutons = []
+        self.dbutons = []
+        folder = './saved'
+        if(len(os.listdir(folder)) == 0):
+            #print oput nothing saved
+            self.label = QLabel("Nothing Saved")
+            self.layout.addWidget(self.label)
+        else:
+            for filename in os.listdir(folder):
+                self.names.append(filename)
+                self.ebutons.append(i)
+                self.dbutons.append(i)
+                lay = QVBoxLayout()
+                gbox = QGroupBox('Result'+str(i+1))
+                path = folder +"/"+ filename 
+                with open(path,'rb') as thefile:
+                    imag = pickle.load(thefile)
+                path += ".jpg"
+                im = Image.open(requests.get(imag['cover_photo']['urls']['thumb'], stream=True).raw)
+                im.save(path)
+                self.ebutons[i] = QPushButton("Edit")
+                self.ebutons[i].clicked.connect(lambda state=i, a=i:self.editme(state))
+                self.dbutons[i] = QPushButton("Delete")
+                self.dbutons[i].clicked.connect(lambda state=i, a=i: self.deleteme(state))
+                pixmap = QPixmap(path)
+                self.image = QLabel()
+                self.image.setPixmap(pixmap)
+                lay.addWidget(self.image)
+                buts = QHBoxLayout()
+                buts.addWidget(self.ebutons[i])
+                buts.addWidget(self.dbutons[i])
+                lay.addLayout(buts)
+                gbox.setLayout(lay)
+                self.layout.addWidget(gbox)
+                try:
+                    if os.path.isfile(path) or os.path.islink(path):
+                        os.unlink(path)
+                    elif os.path.isdir(path):
+                        shutil.rmtree(path)
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+                i+=1
+        print("done")
+        self.setLayout(self.layout)
+    @Slot()
+    def editme(self,button):
+        print("saving "+self.names[button])
+        folder = './saved'
+        
+        for filename in os.listdir(folder):
+            if filename == self.names[button]:
+                with open("./results/result"+str(button),"rb") as my_file:
+                    unpick = pickle.load(my_file)
+                i =0
+                sfolder = './saved'
+                for files in os.listdir(sfolder):
+                    with open(sfolder+"/"+files,"rb") as my_file:
+                        compare = pickle.load(my_file)
+                    if unpick == compare:
+                        print("already saved")
+                        return
+                    i += 1
+                with open("./saved/saved"+str(i),"wb") as myfile:
+                    #pickle.dump(unpick, myfile)
+                    print("")
+                print("Saved")
+    @Slot()
+    def deleteme(self,button):
+        print("going to removing "+self.names[button])
+        folder = './saved'
+        for filename in os.listdir(folder):
+            if filename == self.names[button]:
+                print("removing "+self.names[button])
+                path = folder + "/" + filename
+                try:
+                    if os.path.isfile(path) or os.path.islink(path):
+                        os.unlink(path)
+                    elif os.path.isdir(path):
+                        shutil.rmtree(path)
+                    print("removed")
+                    window.savedtab()
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+                
+                        
 
-    def mousePressEvent(self,event):
-        self.clicked.emit(self.objectName())
+
 
 class resultpage(QWidget):
     def __init__(self):
@@ -27,36 +110,41 @@ class resultpage(QWidget):
         self.layout = QHBoxLayout()
         i = 0
         self.names = []
-        self.butons = []
+        self.ebutons = []
         folder = './results'
-        for filename in os.listdir(folder):
-            self.names.append(filename)
-            self.butons.append(i)
-            lay = QVBoxLayout()
-            gbox = QGroupBox('Result'+str(i+1))
-            path = folder +"/"+ filename 
-            with open(path,'rb') as thefile:
-                imag = pickle.load(thefile)
-            path += ".jpg"
-            im = Image.open(requests.get(imag['cover_photo']['urls']['thumb'], stream=True).raw)
-            im.save(path)
-            self.butons[i] = QPushButton("Save result"+str(i+1))
-            self.butons[i].clicked.connect(lambda state=i, a=i:self.saveme(state))
-            pixmap = QPixmap(path)
-            self.image = QLabel()
-            self.image.setPixmap(pixmap)
-            lay.addWidget(self.image)
-            lay.addWidget(self.butons[i])
-            gbox.setLayout(lay)
-            self.layout.addWidget(gbox)
-            try:
-                if os.path.isfile(path) or os.path.islink(path):
-                    os.unlink(path)
-                elif os.path.isdir(path):
-                    shutil.rmtree(path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
-            i+=1
+        if(len(os.listdir(folder)) == 0):
+            #print oput nothing saved
+            self.label = QLabel("No matching result")
+            self.layout.addWidget(self.label)
+        else:
+            for filename in os.listdir(folder):
+                self.names.append(filename)
+                self.ebutons.append(i)
+                lay = QVBoxLayout()
+                gbox = QGroupBox('Result'+str(i+1))
+                path = folder +"/"+ filename 
+                with open(path,'rb') as thefile:
+                    imag = pickle.load(thefile)
+                path += ".jpg"
+                im = Image.open(requests.get(imag['cover_photo']['urls']['thumb'], stream=True).raw)
+                im.save(path)
+                self.ebutons[i] = QPushButton("Save result"+str(i+1))
+                self.ebutons[i].clicked.connect(lambda state=i, a=i:self.saveme(state))
+                pixmap = QPixmap(path)
+                self.image = QLabel()
+                self.image.setPixmap(pixmap)
+                lay.addWidget(self.image)
+                lay.addWidget(self.ebutons[i])
+                gbox.setLayout(lay)
+                self.layout.addWidget(gbox)
+                try:
+                    if os.path.isfile(path) or os.path.islink(path):
+                        os.unlink(path)
+                    elif os.path.isdir(path):
+                        shutil.rmtree(path)
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+                i+=1
         print("done")
         self.setLayout(self.layout)
     
@@ -78,9 +166,14 @@ class resultpage(QWidget):
                         print("already saved")
                         return
                     i += 1
-                with open("./saved/saved"+str(i),"wb") as myfile:
+                tf = tempfile.NamedTemporaryFile()
+                print(tf.name)
+                tf = tf.name.split('\\')
+                print(tf)
+                with open("./saved/"+tf[len(tf)-1],"wb") as myfile:
                     pickle.dump(unpick, myfile)
                 print("Saved")
+                window.savedtab()
 
 
 class Window(QWidget):
@@ -92,6 +185,8 @@ class Window(QWidget):
         layout.addWidget(self.tabs, 0, 0, 1, 2)
         self.tab1 = Homepage()
         self.tabs.addTab(self.tab1,"Home")
+        self.tab2 = savedpage()
+        self.tabs.addTab(self.tab2,"Saved")
 
     def createNewTab(self,imgs):
         
@@ -103,9 +198,22 @@ class Window(QWidget):
         index = self.tabs.count()
         self.tabs.addTab(resultpage(), 'Results')
         self.tabs.setCurrentIndex(index)
+        self.tabs.update()
 
-    def save(self,button):
-        print(button.text())
+    def savedtab(self):
+        #DELETE OLD TAB
+        for i in range(self.tabs.count()):
+            if self.tabs.tabText(i) == 'Saved':
+                self.tabs.removeTab(i)
+        
+        index = self.tabs.count()
+        self.tabs.addTab(savedpage(), 'Saved')
+        self.tabs.setCurrentIndex(index)
+        self.tabs.update()
+
+    def repaint(self):
+        #redrawing tab
+        self.tabs.currentWidget().repaint()
 
 
 class Homepage(QWidget):
@@ -132,7 +240,20 @@ class Homepage(QWidget):
 
     @Slot()
     def find_images(self):
+        print("clearing old results")
+        folder = './results'
+        for filename in os.listdir(folder):
+            path = folder + "/" + filename
+            try:
+                if os.path.isfile(path) or os.path.islink(path):
+                    os.unlink(path)
+                elif os.path.isdir(path):
+                    shutil.rmtree(path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
+
         print("Finding Match...")
+
 
         # Connect to Unsplash API
         api_key = 'uAJtv5-qrHmTRbHc-7xqzv44tPPPZ2tOL39g3kP3lvM'
