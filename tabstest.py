@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QListWidgetItem,QMainWindow, QGridLayout, QApplication, QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QDialog, QTextBrowser, QComboBox, QLineEdit, QTabWidget, QListWidget, QListView
+from PySide6.QtWidgets import QGroupBox, QListWidgetItem,QMainWindow, QGridLayout, QApplication, QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QDialog, QTextBrowser, QComboBox, QLineEdit, QTabWidget, QListWidget, QListView
 from PySide6.QtCore import Qt, Slot, QSize, Signal
 from PySide6.QtGui import QPixmap, QIcon
 from PIL import Image
@@ -20,6 +20,69 @@ class clickableImage(QLabel):
     def mousePressEvent(self,event):
         self.clicked.emit(self.objectName())
 
+class resultpage(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout()
+        i = 0
+        self.names = []
+        self.butons = []
+        folder = './results'
+        for filename in os.listdir(folder):
+            self.names.append(filename)
+            self.butons.append(i)
+            lay = QVBoxLayout()
+            gbox = QGroupBox('Result'+str(i+1))
+            path = folder +"/"+ filename 
+            with open(path,'rb') as thefile:
+                imag = pickle.load(thefile)
+            path += ".jpg"
+            im = Image.open(requests.get(imag['cover_photo']['urls']['thumb'], stream=True).raw)
+            im.save(path)
+            self.butons[i] = QPushButton("Save result"+str(i+1))
+            self.butons[i].clicked.connect(lambda state=i, a=i:self.saveme(state))
+            pixmap = QPixmap(path)
+            self.image = QLabel()
+            self.image.setPixmap(pixmap)
+            lay.addWidget(self.image)
+            lay.addWidget(self.butons[i])
+            gbox.setLayout(lay)
+            self.layout.addWidget(gbox)
+            try:
+                if os.path.isfile(path) or os.path.islink(path):
+                    os.unlink(path)
+                elif os.path.isdir(path):
+                    shutil.rmtree(path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
+            i+=1
+        print("done")
+        self.setLayout(self.layout)
+    
+    @Slot()
+    def saveme(self,button):
+        print("saving "+self.names[button])
+        folder = './results'
+        
+        for filename in os.listdir(folder):
+            if filename == self.names[button]:
+                with open("./results/result"+str(button),"rb") as my_file:
+                    unpick = pickle.load(my_file)
+                i =0
+                sfolder = './saved'
+                for files in os.listdir(sfolder):
+                    with open(sfolder+"/"+files,"rb") as my_file:
+                        compare = pickle.load(my_file)
+                    if unpick == compare:
+                        print("already saved")
+                        return
+                    i += 1
+                with open("./saved/saved"+str(i),"wb") as myfile:
+                    pickle.dump(unpick, myfile)
+                print("Saved")
+
+
 class Window(QWidget):
     def __init__(self):
         super(Window, self).__init__()
@@ -32,49 +95,18 @@ class Window(QWidget):
 
     def createNewTab(self,imgs):
         
-        
+        #DELETE OLD TAB
         for i in range(self.tabs.count()):
             if self.tabs.tabText(i) == 'Results':
                 self.tabs.removeTab(i)
-        viewer = QListWidget(self)
-        viewer.setViewMode(QListView.IconMode)
-        viewer.setIconSize(QSize(256, 256))
-        viewer.setResizeMode(QListView.Adjust)
-        viewer.setSpacing(10)
-        # self.mybtn = QPushButton("close tab")
-        # btn = QListWidgetItem()
-        # wid = QWidget()
-        # widlay = QHBoxLayout()
-        # widlay.addWidget(self.mybtn)
-        # wid.setLayout(widlay)
-        # btn.setSizeHint(wid.sizeHint())
 
-        # viewer.addItem(btn)
-        # viewer.setItemWidget(btn,wid)
-
-        folder = './results'
-        for filename in os.listdir(folder):
-            path = folder +"/"+ filename
-            with open(path,'rb') as thefile:
-                imag = pickle.load(thefile)
-            im = Image.open(requests.get(imag['cover_photo']['urls']['thumb'], stream=True).raw)
-            im.save(path+".jpg")
-            pixmap = QPixmap()
-            ipath = path + ".jpg"
-            print('load (%s) %r' % (pixmap.load(ipath), ipath))
-            item = QListWidgetItem(ipath)
-            item.setIcon(QIcon(ipath))
-            viewer.addItem(item)
-            try:
-                if os.path.isfile(ipath) or os.path.islink(ipath):
-                    os.unlink(ipath)
-                elif os.path.isdir(ipath):
-                    shutil.rmtree(ipath)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
         index = self.tabs.count()
-        self.tabs.addTab(viewer, 'Results')
+        self.tabs.addTab(resultpage(), 'Results')
         self.tabs.setCurrentIndex(index)
+
+    def save(self,button):
+        print(button.text())
+
 
 class Homepage(QWidget):
     def __init__(self):
@@ -120,7 +152,7 @@ class Homepage(QWidget):
             print('please try again')
 
         if data:
-            i = 1
+            i = 0
             imgs = []
             for image in data['results']:
                 im = Image.open(requests.get(image['cover_photo']['urls']['full'], stream=True).raw)
@@ -129,8 +161,8 @@ class Homepage(QWidget):
                     pickle.dump(image, myfile)
                 name = "./results/result"+str(i)+".jpg"
                 #im.save(name)
-                with open("./results/result"+str(i),"rb") as my_file:
-                    unpick = pickle.load(my_file)
+                # with open("./results/result"+str(i),"rb") as my_file:
+                #     unpick = pickle.load(my_file)
                 #pprint(unpick)
                 i += 1
 
