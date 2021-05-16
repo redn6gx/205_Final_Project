@@ -453,7 +453,7 @@ class ImageManipulation(QWidget):
             # Square distance between 2 colors
             def distance2(color1, color2):
                 r1, g1, b1 = color1
-                r2, g2, b2, a2 = color2
+                r2, g2, b2 = color2
                 return (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2
 
             color_to_change = (0, 0, 255)
