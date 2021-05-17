@@ -372,7 +372,6 @@ class ImageManipulation(QWidget):
         self.my_combo_box.addItems(self.my_list)
 
         self.edit_btn = QPushButton("Edit")
-        #self.cancel_btn = QPushButton("Back")
 
         # Create U.I. Layout
         mbox = QHBoxLayout()
@@ -381,7 +380,6 @@ class ImageManipulation(QWidget):
         vbox.addWidget(self.edit_label)
         vbox.addWidget(self.my_combo_box)
         vbox.addWidget(self.edit_btn)
-        #vbox.addWidget(self.cancel_btn)
 
         mbox.addLayout(vbox)
         image = Image.open(requests.get(img['urls']['thumb'], stream=True).raw)
@@ -397,7 +395,6 @@ class ImageManipulation(QWidget):
 
         # when button is clicked send lineedit and combo box info to on_submit
         self.edit_btn.clicked.connect(self.on_edit)
-        #self.cancel_btn.clicked.connect(self.on_back)
 
     @Slot()
     def on_edit(self):
@@ -405,7 +402,7 @@ class ImageManipulation(QWidget):
         # set up im_edit as which filter the user chose
         im_edit = self.my_combo_box.currentText()
 
-        ##TODO change to correct image
+        # take the image to edit and load it
         input_image = Image.open("./editing/edit.jpg")
         input_pixels = input_image.load()
 
@@ -413,6 +410,7 @@ class ImageManipulation(QWidget):
         draw = ImageDraw.Draw(output_image)
 
         # Options are: ["Pick a value", "Luminosity", "Contrast", "Colorize", "Sepia", "Negative", "Grayscale", "None"]
+        # Luminostity brightens the image overall
         if (im_edit == "Luminosity"):
             luminosity = 80
 
@@ -425,9 +423,9 @@ class ImageManipulation(QWidget):
                     b = int(b + luminosity)
                     draw.point((x, y), (r, g, b))
 
-            #output_image.save("output.png")
+                    
             output_image.show()
-
+        # Contrast makes the image slightly darker overall
         elif (im_edit == "Contrast"):
             # Find minimum and maximum luminosity
             imin = 255
@@ -453,6 +451,7 @@ class ImageManipulation(QWidget):
                     draw.point((x, y), (r, g, b))
 
             output_image.show()
+        # Colorize increases one color in the image
         elif (im_edit == "Colorize"):
             # Square distance between 2 colors
             def distance2(color1, color2):
@@ -473,8 +472,8 @@ class ImageManipulation(QWidget):
                         b = int(b * .5)
                     draw.point((x, y), (r, g, b))
 
-            #output_image.save("output.png")
             output_image.show()
+        # Sepia increases the red and decreases the blue value depending on the intensity
         elif (im_edit == "Sepia"):
             def sepia(pixel):
                 if pixel[0] < 63:
@@ -488,19 +487,18 @@ class ImageManipulation(QWidget):
                 return r,g,b
             sepia_list = map(sepia, input_image.getdata())
             output_image.putdata(list(sepia_list))
-            #output_image.save("output.png")
             output_image.show()
+        # Negative swaps the rgb values to their opposite counterparts
         elif (im_edit == "Negative"):
             negative_list = [(255-p[0], 255-p[1], 255-p[2])
                                 for p in input_image.getdata()]
             output_image.putdata(negative_list)
-            #output_image.save("output.png")
             output_image.show()
+        # Grayscale averages the rgb values and creates the gray version of the image
         elif (im_edit == "Grayscale"):
             new_list = [ ( (a[0]+a[1]+a[2])//3, ) * 3
                                 for a in input_image.getdata() ]
             output_image.putdata(new_list)
-            #output_image.save("output.png")
             output_image.show()
         else: #"Pick a value" or "None"
             input_image.show()
