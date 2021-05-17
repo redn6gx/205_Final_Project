@@ -1,3 +1,7 @@
+#CST 205 Image Search and Edit Engine
+#A window to be able to search save and edit images
+#Bobby Davis Christopher Scott and Cody Todd
+
 import sys
 from PySide6.QtWidgets import QGroupBox, QListWidgetItem,QMainWindow, QGridLayout, QApplication, QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QDialog, QTextBrowser, QComboBox, QLineEdit, QTabWidget, QListWidget, QListView
 from PySide6.QtCore import Qt, Slot, QSize, Signal, QObject
@@ -9,7 +13,7 @@ import os, pickle
 import tempfile
 
 api_key = 'uAJtv5-qrHmTRbHc-7xqzv44tPPPZ2tOL39g3kP3lvM'
-
+#savedpage by Christopher Scott
 class savedpage(QWidget):
     def __init__(self):
         super().__init__()
@@ -19,6 +23,7 @@ class savedpage(QWidget):
         self.ebutons = []
         self.dbutons = []
         folder = './saved'
+        #-------------Loading saved images from ./saved------------
         if(len(os.listdir(folder)) == 0):
             #print oput nothing saved
             self.label = QLabel("Nothing Saved")
@@ -91,7 +96,7 @@ class savedpage(QWidget):
                         
 
 
-
+#resultpage by Christopher Scott
 class resultpage(QWidget):
     def __init__(self):
         super().__init__()
@@ -101,6 +106,7 @@ class resultpage(QWidget):
         self.names = []
         self.ebutons = []
         folder = './results'
+        #------------loading result images from api call into result page----------
         if(len(os.listdir(folder)) == 0):
             #print oput nothing saved
             self.label = QLabel("No matching result")
@@ -143,7 +149,7 @@ class resultpage(QWidget):
     def saveme(self,button):
         print("saving "+self.names[button])
         folder = './results'
-        
+        #----when saving finds the file and checks if already saved if not pickles the data into saved folder with generated name----
         for filename in os.listdir(folder):
             if filename == self.names[button]:
                 with open("./results/result"+str(button),"rb") as my_file:
@@ -166,7 +172,7 @@ class resultpage(QWidget):
                 print("Saved")
                 window.savedtab()
 
-
+#Window by Christopher Scott
 class Window(QWidget):
     def __init__(self):
         super(Window, self).__init__()
@@ -178,7 +184,7 @@ class Window(QWidget):
         self.tabs.addTab(self.tab1,"Home")
         self.tab2 = savedpage()
         self.tabs.addTab(self.tab2,"Saved")
-
+    #this creates the result tab
     def createNewTab(self,imgs):
         
         #DELETE OLD TAB
@@ -190,7 +196,7 @@ class Window(QWidget):
         self.tabs.addTab(resultpage(), 'Results')
         self.tabs.setCurrentIndex(index)
         self.tabs.update()
-
+    #this creates the saved tab
     def savedtab(self):
         #DELETE OLD TAB
         for i in range(self.tabs.count()):
@@ -201,7 +207,7 @@ class Window(QWidget):
         self.tabs.addTab(savedpage(), 'Saved')
         self.tabs.setCurrentIndex(index)
         self.tabs.update()
-    
+    #this creates the edit tab
     def paintTab(self,img):
         #DELETE OLD TAB
         for i in range(self.tabs.count()):
@@ -212,14 +218,14 @@ class Window(QWidget):
         self.tabs.addTab(ImageManipulation(img), 'Edit')
         self.tabs.setCurrentIndex(index)
         self.tabs.update()
-
+    #Deprecated
     def repaint(self):
         #redrawing tab
         self.tabs.currentWidget().repaint()
 
 
 
-
+#Homepage by Bobby Davis
 class Homepage(QWidget):
     def __init__(self):
         super().__init__()
@@ -354,7 +360,7 @@ class Homepage(QWidget):
             return home_images
         else:
             print('no data')
-
+#ImageManipulation by Cody Todd
 class ImageManipulation(QWidget):
     def __init__(self,img):
         super().__init__()
