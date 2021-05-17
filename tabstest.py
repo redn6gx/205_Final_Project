@@ -73,7 +73,7 @@ class savedpage(QWidget):
         
         for filename in os.listdir(folder):
             if filename == self.names[button]:
-                with open("./results/result"+str(button),"rb") as my_file:
+                with open("./saved/"+self.names[button],"rb") as my_file:
                     unpick = pickle.load(my_file)
                 window.paintTab(unpick)
     @Slot()
