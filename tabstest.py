@@ -303,7 +303,7 @@ class Homepage(QWidget):
             'client_id': api_key,
             'query' : self.srch_box.text(),
             'page' : 1,
-            'per_page' : 1
+            'per_page' : 5
         }
         endpoint = 'https://api.unsplash.com/search/photos' # define endpoint
         try:
