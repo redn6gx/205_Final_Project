@@ -10,7 +10,7 @@ CST 205
 
 Run with command "python tabtest.py"
 
-https://github.com/redn6gx/205_Final_Project/
+https://github.com/redn6gx/205_Final_Project/tree/Final
 
 https://trello.com/b/cffIqhJo/cst-205-team-30
 
