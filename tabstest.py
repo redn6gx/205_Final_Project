@@ -237,32 +237,30 @@ class Homepage(QWidget):
         self.srch_btn = QPushButton("Search")
 
         # Create U.I. Layout
-        mbox = QVBoxLayout()
+        mbox = QVBoxLayout() # Main layout
 
-        vbox = QVBoxLayout()
+        vbox = QVBoxLayout()    # Layout for search feature
         vbox.addWidget(self.homepage_label)
         vbox.addWidget(self.search_label)
         vbox.addWidget(self.srch_box)
         vbox.addWidget(self.srch_btn)
 
-        gbox1 = QGroupBox()
+        gbox1 = QGroupBox() # Set group for search feature layout
         gbox1.setLayout(vbox)
         mbox.addWidget(gbox1)
 
-        # Homes Images Layout
+        # Home Images
         images = []
         images = self.getHomepageImages()
 
         # Create layout for images
-        vbox2 = QHBoxLayout()
+        vbox2 = QHBoxLayout()   # horizontal layout
 
         i = 0
-        for img in images:
+        for img in images:  # iterate through images list
             self.label = QLabel()
-            # pic = Image.open(requests.get(img['urls']['thumb'], stream=True).raw)
 
-            pixmap1 = QPixmap(img)
-
+            pixmap1 = QPixmap(img)  # set image
             pixmap1 = pixmap1.scaled(300, 300, Qt.KeepAspectRatio)
 
             self.label.setPixmap(pixmap1)
@@ -270,14 +268,14 @@ class Homepage(QWidget):
             temp_vbox = QVBoxLayout()
             temp_vbox.addWidget(self.label)  
 
-            gbox2 = QGroupBox()
+            gbox2 = QGroupBox() # group box for current image
             gbox2.setLayout(temp_vbox)
             gbox2.setStyleSheet("background-color: grey")
             
             vbox2.addWidget(gbox2)
             i += 1
 
-        gbox3 = QGroupBox()
+        gbox3 = QGroupBox() # main group box for images
         gbox3.setLayout(vbox2)
         mbox.addWidget(gbox3)
         self.setLayout(mbox)
@@ -300,13 +298,13 @@ class Homepage(QWidget):
     def find_images(self):
         print("Finding Match...")
 
-        payload = {
+        payload = { # pass parameters
             'client_id': api_key,
             'query' : self.srch_box.text(),
             'page' : 1,
             'per_page' : 1
         }
-        endpoint = 'https://api.unsplash.com/search/photos'
+        endpoint = 'https://api.unsplash.com/search/photos' # define endpoint
         try:
             request = requests.get(endpoint, params=payload)
             data = request.json()
@@ -314,11 +312,11 @@ class Homepage(QWidget):
         except:
             print('please try again')
 
-        if data:
+        if data:    # iterate through retrieved json object
             i = 0
             imgs = []
             for image in data['results']:
-                im = Image.open(requests.get(image['urls']['full'], stream=True).raw)
+                im = Image.open(requests.get(image['urls']['full'], stream=True).raw)   # get image from json
                 imgs.append(image)
                 with open("./results/result"+str(i),"wb") as myfile:
                     pickle.dump(image, myfile)
@@ -336,7 +334,7 @@ class Homepage(QWidget):
             'client_id': api_key,
             'count' : 3
         }
-        endpoint = 'https://api.unsplash.com/photos/random'
+        endpoint = 'https://api.unsplash.com/photos/random' # use this endpoint for random images
         try:
             request = requests.get(endpoint, params=payload)
             data = request.json()
